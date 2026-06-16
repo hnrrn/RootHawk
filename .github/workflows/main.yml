@@ -1,0 +1,40 @@
+name: Build Go ARMv7 Binary
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build-armv7:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21' # 可以根据项目实际需要的 Go 版本进行调整（例如 1.22, 1.23 等）
+        cache: true        # 开启缓存，加速后续构建
+
+    - name: Build for ARMv7
+      run: |
+        # GOOS=linux 目标系统为 Linux
+        # GOARCH=arm 目标架构为 32位 ARM
+        # GOARM=7 指定使用 ARMv7 指令集（支持硬浮点）
+        # CGO_ENABLED=0 禁用 CGO，实现纯 Go 静态编译，让二进制文件具备极高跨平台兼容性
+        
+        env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -v -o roothawk-armv7 main.go
+        
+        # 注意：如果项目的入口文件不是 main.go，而是直接在根目录下，可以简写为：
+        # env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -v -o roothawk-armv7
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RootHawk-armv7-binary
+        path: roothawk-armv7
